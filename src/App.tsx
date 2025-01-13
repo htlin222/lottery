@@ -8,6 +8,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 
 const LotteryInterface = () => {
   const [options, setOptions] = useState<string[]>([]);
@@ -15,6 +16,7 @@ const LotteryInterface = () => {
   const [winner, setWinner] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
+  const [progress, setProgress] = useState(0);
   const spinRef = useRef<NodeJS.Timeout | null>(null);
 
   // 處理文件上傳
@@ -43,6 +45,7 @@ const LotteryInterface = () => {
     
     setIsSpinning(true);
     setWinner(null);
+    setProgress(0);
     
     let duration = 0;
     const totalDuration = 3000; // 總動畫時間
@@ -54,12 +57,14 @@ const LotteryInterface = () => {
         const winnerIndex = Math.floor(Math.random() * options.length);
         setWinner(options[winnerIndex]);
         setShowWinnerDialog(true);
+        setProgress(100);
         return;
       }
       
       const randomIndex = Math.floor(Math.random() * options.length);
       setWinner(options[randomIndex]);
       duration += interval;
+      setProgress((duration / totalDuration) * 100);
       spinRef.current = setTimeout(animate, interval);
     };
     
@@ -85,6 +90,13 @@ const LotteryInterface = () => {
               和信醫院2025春酒抽獎
             </h1>
 
+            {/* Progress Bar */}
+            {isSpinning && (
+              <div className="mb-4">
+                <Progress value={progress} className="w-full h-2" />
+              </div>
+            )}
+            
             {/* 上傳區域 */}
             <div className="relative group mb-8">
               <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-all duration-300">
@@ -156,6 +168,11 @@ const LotteryInterface = () => {
             )}
           </div>
         </div>
+      </div>
+
+      {/* Copyright text */}
+      <div className="fixed bottom-4 right-4 text-white text-lg">
+        Ⓒ 林協霆 made with ❤️
       </div>
 
       {/* Winner Dialog */}
