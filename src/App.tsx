@@ -9,6 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
+import { Howl } from 'howler';
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -66,6 +67,27 @@ const LotteryInterface = () => {
   const [skipWinners, setSkipWinners] = useState(true);
   const spinRef = useRef<NodeJS.Timeout | null>(null);
   const dialogTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Sound effects
+  const spinningSound = useRef(new Howl({
+    src: ['/src/assets/sounds/winnerLoading.mp3'],
+    loop: true
+  }));
+  
+  const winnerSound = useRef(new Howl({
+    src: ['/src/assets/sounds/winnerShow.mp3']
+  }));
+  
+  const applauseSound = useRef(new Howl({
+    src: ['/src/assets/sounds/applause.mp3']
+  }));
+
+  // Function to stop all sounds
+  const stopAllSounds = () => {
+    spinningSound.current.stop();
+    winnerSound.current.stop();
+    applauseSound.current.stop();
+  };
 
   // 處理文件上傳
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -188,7 +210,7 @@ const LotteryInterface = () => {
     setProgress(0);
     
     let duration = 0;
-    const totalDuration = 2000; // 總動畫時間
+    const totalDuration = 2500; // 總動畫時間
     const interval = 50; // 更新間隔
     let currentWinnerIndex = 0;
     let remainingOptions = [...options];
@@ -214,22 +236,28 @@ const LotteryInterface = () => {
       }
     }
     
+    spinningSound.current.play();
+    
     const animate = () => {
       if (duration >= totalDuration) {
         if (currentWinnerIndex < winnerCount) {
-          // 抽出一位得獎者
           const randomIndex = Math.floor(Math.random() * remainingOptions.length);
-          const winner = remainingOptions[randomIndex];
-          remainingOptions.splice(randomIndex, 1);
+          const selectedOption = remainingOptions[randomIndex];
+          
+          // Remove the selected option from remaining options
+          remainingOptions = remainingOptions.filter((_, index) => index !== randomIndex);
           
           const newWinner = {
-            number: currentWinnerIndex + 1,
-            name: winner
+            number: selectedOption.number,
+            name: selectedOption
           };
           
           setWinners(prev => [...prev, newWinner]);
           setCurrentWinner(newWinner);
           setShowWinnerDialog(true);
+          
+          stopAllSounds();
+          winnerSound.current.play();
           
           // 3秒後自動關閉對話框
           if (dialogTimeoutRef.current) {
@@ -244,12 +272,16 @@ const LotteryInterface = () => {
               setTimeout(() => {
                 currentWinnerIndex++;
                 duration = 0;
+                stopAllSounds();
+                spinningSound.current.play();
                 animate();
               }, 100);
             } else {
               // 全部抽完
               setIsSpinning(false);
               setProgress(100);
+              stopAllSounds();
+              applauseSound.current.play();
             }
           }, 3000);
           
@@ -537,7 +569,10 @@ const LotteryInterface = () => {
         </Dialog>
       )}
 
-      <div className="text-center text-white text-sm mt-8 bg-black/50 px-4 py-3 rounded-full">
+      <div 
+        className="text-center text-white text-sm mt-8 bg-black/50 px-4 py-3 rounded-full cursor-pointer hover:bg-black/60 transition-colors"
+        onClick={stopAllSounds}
+      >
         ⓒ 林協霆 made with 🫰
       </div>
     </div>
