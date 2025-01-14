@@ -70,16 +70,16 @@ const LotteryInterface = () => {
 
   // Sound effects
   const spinningSound = useRef(new Howl({
-    src: ['/src/assets/sounds/winnerLoading.mp3'],
+    src: ['/sounds/winnerLoading.mp3'],
     loop: true
   }));
   
   const winnerSound = useRef(new Howl({
-    src: ['/src/assets/sounds/winnerShow.mp3']
+    src: ['/sounds/winnerShow.mp3']
   }));
   
   const applauseSound = useRef(new Howl({
-    src: ['/src/assets/sounds/applause.mp3']
+    src: ['/sounds/applause.mp3']
   }));
 
   // Function to stop all sounds
