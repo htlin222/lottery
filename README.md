@@ -1,79 +1,81 @@
-# Lucky Draw Application
+# 和信醫院2025春酒抽獎系統
 
-A modern and interactive lucky draw application built with React and Tailwind CSS. Perfect for events, giveaways, or any situation where you need to randomly select winners from a list of participants.
+一個現代化的抽獎系統，專為和信醫院2025年春酒活動設計。採用React、TypeScript和Tailwind CSS構建，具有完整的抽獎功能與流暢的動畫效果。
 
-## Features
+## 主要功能
 
-- 🎯 Random selection with animation effects
-- 📤 CSV file upload support
-- 🎨 Beautiful UI with smooth animations
-- 🎆 Celebration effects for winners
-- 📱 Responsive design
-- 🔄 Reset and reuse functionality
+- 🎯 隨機抽獎與動畫效果
+- 📤 文字檔名單上傳支援 (.txt)
+- ⚡ 快抽模式
+- 🚫 跳過已中獎者選項
+- 🎉 中獎慶祝動畫與音效
+- 📱 響應式設計
+- 📥 中獎名單下載 (CSV格式)
+- 📚 中獎歷史紀錄
+- 🔄 重置與重新使用功能
+- 📊 抽獎進度條顯示
 
-## Getting Started
+## 快速開始
 
-### Installation
+### 安裝
 
 ```bash
 npm install
-# or
+# 或
 yarn install
 ```
 
-### Running the Application
+### 運行應用程式
 
 ```bash
 npm run dev
-# or
+# 或
 yarn dev
 ```
 
-The application will start at `http://localhost:5173`
+應用程式將在 `http://localhost:5173` 啟動
 
-## Usage Instructions
+## 使用說明
 
-### 1. Loading Participants
+### 1. 載入參與者名單
 
-There are two ways to load participants:
-- **Upload CSV File**: Click the upload button and select a CSV file with your participants' names
-- **Manual Entry**: Type names directly into the text input and press Enter
+有兩種方式載入參與者名單：
+- **上傳文字檔**：點擊上傳按鈕並選擇包含參與者姓名的 .txt 檔案（每行一個姓名）
+- **手動輸入**：直接在文字輸入框中輸入姓名並按下 Enter
 
-### 2. Running the Lucky Draw
+### 2. 進行抽獎
 
-1. Once participants are loaded, they will appear in the right sidebar
-2. Click the "Start" button to begin the animation
-3. Click "Stop" to select a winner
-4. A celebration animation will play and display the winner
+1. 載入名單後，參與者數量將顯示在右側
+2. 設定抽獎人數（預設為1人）
+3. 選擇是否跳過已中獎者
+4. 點擊「開始抽獎」按鈕啟動動畫抽獎
+   - 或使用「快抽模式」立即顯示結果
+5. 中獎者將顯示在右側名單中
+6. 中獎時會播放慶祝動畫與音效
 
-### 3. Customizing the Title
+### 3. 中獎名單管理
 
-To change the title of the application:
+- **下載名單**：將中獎名單匯出為CSV檔案
+- **清除名單**：重置當前中獎名單
+- **加入歷史**：將當前中獎者加入歷史紀錄
+- **查看歷史**：在抽獎時可選擇跳過歷史中獎者
 
-1. Open `src/App.tsx`
-2. Locate the following section (around line 25):
-   ```tsx
-   <h1 className="text-4xl font-bold text-white mb-8">
-     Lucky Draw
-   </h1>
-   ```
-3. Replace "Lucky Draw" with your desired title
+### 4. 其他設定
 
-### 4. Additional Settings
+- **音效控制**：點擊頁面底部版權聲明可停止所有音效
+- **重置系統**：使用「重新載入」按鈕清除所有設定與名單
 
-- **Reset**: Click the reset button to clear all participants and start over
-- **Previous Winners**: The application keeps track of previous winners to avoid duplicates
-- **Animation Speed**: The selection animation automatically adjusts based on the number of participants
+## 開發技術
 
-## Development
-
-This project uses:
+本專案使用以下技術：
 - React 18+
 - Vite
 - Tailwind CSS
 - TypeScript
-- Radix UI Components
+- Radix UI 元件庫
+- Howler.js (音效處理)
+- Fireworks.js (慶祝動畫)
 
-## License
+## 授權
 
-© 2025 林協霆. All rights reserved.
+© 2025 林協霆。保留所有權利。
