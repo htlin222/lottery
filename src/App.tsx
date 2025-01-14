@@ -10,17 +10,34 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 
-const WinnersList = ({ winners }: { winners: Array<{ number: number; name: string }> }) => {
+const useIsMobile = () => {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    checkIsMobile();
+    window.addEventListener('resize', checkIsMobile);
+    
+    return () => window.removeEventListener('resize', checkIsMobile);
+  }, []);
+
+  return isMobile;
+};
+
+const WinnersList = ({ winners, isMobile }: { winners: Array<{ number: number; name: string }>, isMobile: boolean }) => {
   return (
-    <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2 max-h-[420px] overflow-y-auto pr-2">
+    <div className={`space-y-2 ${isMobile ? 'w-full px-2' : ''}`}>
+      <div className={`grid ${isMobile ? 'grid-cols-1' : 'grid-cols-2'} gap-2 max-h-[420px] overflow-y-auto pr-2`}>
         {winners.map((winner, index) => (
           <div
             key={index}
             className="flex items-center px-3 py-2 bg-purple-50 rounded-lg"
           >
             <PartyPopper className="w-4 h-4 mr-2 text-purple-600 flex-shrink-0" />
-            <span className="text-purple-600 whitespace-nowrap text-left">
+            <span className="text-purple-600 text-left flex-1 overflow-hidden text-ellipsis">
               {winner.number}. {winner.name}
             </span>
           </div>
@@ -31,6 +48,7 @@ const WinnersList = ({ winners }: { winners: Array<{ number: number; name: strin
 };
 
 const LotteryInterface = () => {
+  const isMobile = useIsMobile();
   const [options, setOptions] = useState<string[]>([]);
   const [isSpinning, setIsSpinning] = useState(false);
   const [winners, setWinners] = useState<Array<{ number: number; name: string }>>([]);
@@ -309,58 +327,17 @@ const LotteryInterface = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 p-6">
-      {/* Winner Dialog */}
-      {showWinnerDialog && currentWinner && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black opacity-50"></div>
-          <div className="relative bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transform scale-100 transition-transform">
-            <PartyPopper className="w-16 h-16 mx-auto text-yellow-500 mb-4" />
-            <h2 className="text-2xl font-bold text-purple-600 mb-2">恭喜！</h2>
-            <p className="text-xl text-gray-600">
-              第 {currentWinner.number} 位得獎者
-            </p>
-            <p className="text-3xl font-bold text-purple-600 mt-2">
-              {currentWinner.name}
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* All Winners Dialog */}
-      {showAllWinnersDialog && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black opacity-50"></div>
-          <div className="relative bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transform scale-100 transition-transform">
-            <PartyPopper className="w-16 h-16 mx-auto text-yellow-500 mb-4" />
-            <div className="text-2xl font-bold text-purple-600 mb-4">
-              沒人可抽了，人人有獎，讚！
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* History Dialog */}
-      {showHistoryDialog && (
-        <div className="fixed inset-0 flex items-center justify-center z-50">
-          <div className="absolute inset-0 bg-black opacity-50"></div>
-          <div className="relative bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transform scale-100 transition-transform">
-            <div className="text-2xl font-bold text-purple-600 mb-4">
-              {historyMessage}
-            </div>
-          </div>
-        </div>
-      )}
-      <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl p-8">
-        <div className="flex gap-4">
+      <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-6xl'} bg-white rounded-xl shadow-2xl p-8`}>
+        <div className={`flex ${isMobile ? 'flex-col' : 'gap-4'}`}>
           {/* 左側抽獎區域 */}
-          <div className="flex-1 min-w-[600px]">
+          <div className={`${isMobile ? 'w-full' : 'flex-1 min-w-[600px]'}`}>
             {/* 標題 */}
             <h1 className="text-3xl font-bold text-left mb-6 text-purple-600">
               和信醫院2025春酒抽獎
             </h1>
 
-            <div className="space-y-6 w-full max-w-md">
-              <div className="flex gap-4 items-center">
+            <div className={`space-y-6 w-full ${isMobile ? '' : 'max-w-md'}`}>
+              <div className={`${isMobile ? 'flex flex-col space-y-2' : 'flex gap-4 items-center'}`}>
                 <label className="flex items-center justify-center px-4 py-2 bg-white rounded-lg shadow-lg cursor-pointer hover:bg-gray-50 transition-colors">
                   <Upload className="w-5 h-5 mr-2 text-purple-600" />
                   <span className="text-purple-600 whitespace-nowrap">{fileName || '上傳名單'}</span>
@@ -373,6 +350,7 @@ const LotteryInterface = () => {
                 </label>
                 <button
                   onClick={handleReload}
+                  disabled={isSpinning}
                   className="flex items-center justify-center px-4 py-2 bg-white rounded-lg shadow-lg cursor-pointer hover:bg-gray-50 transition-colors"
                 >
                   <RotateCcw className="w-5 h-5 mr-2 text-purple-600" />
@@ -422,11 +400,11 @@ const LotteryInterface = () => {
               </div>
 
               {/* 抽獎按鈕 */}
-              <div className="flex gap-4">
+              <div className={`${isMobile ? 'flex flex-col space-y-2' : 'flex gap-4'}`}>
                 <button
                   onClick={spin}
                   disabled={isSpinning || options.length === 0 || winnerCount > options.length}
-                  className={`flex-1 flex items-center justify-start px-6 py-3 rounded-lg shadow-lg transition-colors ${
+                  className={`flex items-center justify-start px-6 py-3 rounded-lg shadow-lg transition-colors ${
                     isSpinning || options.length === 0 || winnerCount > options.length
                       ? 'bg-gray-300 cursor-not-allowed'
                       : 'bg-purple-600 hover:bg-purple-700'
@@ -461,14 +439,14 @@ const LotteryInterface = () => {
           </div>
 
           {/* 右側中獎名單 */}
-          <div className="w-[600px]">
+          <div className={`${isMobile ? 'w-full mt-6' : 'w-[600px]'}`}>
             <div className="bg-white rounded-lg shadow-lg p-4">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-bold text-purple-600 flex items-center text-left whitespace-nowrap">
                   <PartyPopper className="w-6 h-6 mr-2 flex-shrink-0" />
                   中獎名單
                 </h2>
-                <div className="flex gap-2">
+                <div className={`flex ${isMobile ? 'flex-col space-y-2' : 'gap-2'}`}>
                   <button
                     onClick={handleDownloadWinners}
                     className="flex items-center justify-center px-3 py-1 bg-white rounded-lg shadow-lg cursor-pointer hover:bg-gray-50 transition-colors"
@@ -492,7 +470,7 @@ const LotteryInterface = () => {
                   </button>
                 </div>
               </div>
-              <WinnersList winners={winners} />
+              <WinnersList winners={winners} isMobile={isMobile} />
             </div>
           </div>
         </div>
@@ -532,6 +510,33 @@ const LotteryInterface = () => {
           />}
         </DialogContent>
       </Dialog>
+
+      {showAllWinnersDialog && (
+        <Dialog open={showAllWinnersDialog} onOpenChange={setShowAllWinnersDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center">🎉 抽獎結果 🎉</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <WinnersList winners={winners} isMobile={isMobile} />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {showHistoryDialog && (
+        <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-center">歷史紀錄已更新</DialogTitle>
+            </DialogHeader>
+            <div className="text-center">
+              {historyMessage}
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
+
       <div className="text-center text-white text-sm mt-8 bg-black/50 px-4 py-3 rounded-full">
         ⓒ 林協霆 made with 🫰
       </div>
