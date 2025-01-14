@@ -13,7 +13,7 @@ import { Progress } from "@/components/ui/progress";
 const WinnersList = ({ winners }: { winners: Array<{ number: number; name: string }> }) => {
   return (
     <div className="space-y-2">
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid grid-cols-2 gap-2 max-h-[420px] overflow-y-auto pr-2">
         {winners.map((winner, index) => (
           <div
             key={index}
@@ -39,9 +39,13 @@ const LotteryInterface = () => {
   const [inputWinnerCount, setInputWinnerCount] = useState<string>('1');
   const [error, setError] = useState('');
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
+  const [showAllWinnersDialog, setShowAllWinnersDialog] = useState(false);
+  const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [historyMessage, setHistoryMessage] = useState('');
   const [currentWinner, setCurrentWinner] = useState<{ number: number; name: string } | null>(null);
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState<string>('');
+  const [skipWinners, setSkipWinners] = useState(true);
   const spinRef = useRef<NodeJS.Timeout | null>(null);
   const dialogTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -129,6 +133,30 @@ const LotteryInterface = () => {
     }
   };
 
+  const handleAddToHistory = () => {
+    if (winners.length === 0) {
+      setHistoryMessage('目前沒有得獎名單可以加入歷史');
+      setShowHistoryDialog(true);
+      setTimeout(() => setShowHistoryDialog(false), 2000);
+      return;
+    }
+
+    const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
+    const newWinners = winners.map(w => w.name);
+    const duplicates = newWinners.filter(name => historyWinners.includes(name));
+    
+    if (duplicates.length > 0) {
+      setHistoryMessage(`注意：${duplicates.join(', ')} 已在歷史名單中`);
+    } else {
+      setHistoryMessage(`已將 ${newWinners.length} 位得獎者加入歷史名單`);
+    }
+    
+    const newHistory = [...historyWinners, ...newWinners];
+    localStorage.setItem('lotteryHistory', JSON.stringify(newHistory));
+    setShowHistoryDialog(true);
+    setTimeout(() => setShowHistoryDialog(false), 2000);
+  };
+
   // 抽獎動畫效果
   const spin = () => {
     if (isSpinning || options.length === 0 || winnerCount > options.length) {
@@ -146,6 +174,27 @@ const LotteryInterface = () => {
     const interval = 50; // 更新間隔
     let currentWinnerIndex = 0;
     let remainingOptions = [...options];
+
+    // Filter out history winners if skipWinners is checked
+    if (skipWinners) {
+      const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
+      remainingOptions = remainingOptions.filter(name => !historyWinners.includes(name));
+      
+      // If there are fewer people available than needed
+      if (remainingOptions.length < winnerCount) {
+        // Draw all remaining people
+        const allWinners = remainingOptions.map((name, index) => ({
+          number: index + 1,
+          name: name
+        }));
+        setWinners(allWinners);
+        setIsSpinning(false);
+        setProgress(100);
+        setShowAllWinnersDialog(true);
+        setTimeout(() => setShowAllWinnersDialog(false), 3000);
+        return;
+      }
+    }
     
     const animate = () => {
       if (duration >= totalDuration) {
@@ -208,7 +257,28 @@ const LotteryInterface = () => {
     }
     
     let remainingOptions = [...options];
-    const newWinners = [];
+
+    // Filter out history winners if skipWinners is checked
+    if (skipWinners) {
+      const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
+      remainingOptions = remainingOptions.filter(name => !historyWinners.includes(name));
+      
+      // If there are fewer people available than needed
+      if (remainingOptions.length < winnerCount) {
+        // Draw all remaining people
+        const allWinners = remainingOptions.map((name, index) => ({
+          number: index + 1,
+          name: name
+        }));
+        setWinners(allWinners);
+        setProgress(100);
+        setShowAllWinnersDialog(true);
+        setTimeout(() => setShowAllWinnersDialog(false), 3000);
+        return;
+      }
+    }
+    
+    let newWinners = [];
     
     // 直接抽出所有得獎者
     for (let i = 0; i < winnerCount; i++) {
@@ -239,6 +309,47 @@ const LotteryInterface = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 p-6">
+      {/* Winner Dialog */}
+      {showWinnerDialog && currentWinner && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="relative bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transform scale-100 transition-transform">
+            <PartyPopper className="w-16 h-16 mx-auto text-yellow-500 mb-4" />
+            <h2 className="text-2xl font-bold text-purple-600 mb-2">恭喜！</h2>
+            <p className="text-xl text-gray-600">
+              第 {currentWinner.number} 位得獎者
+            </p>
+            <p className="text-3xl font-bold text-purple-600 mt-2">
+              {currentWinner.name}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* All Winners Dialog */}
+      {showAllWinnersDialog && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="relative bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transform scale-100 transition-transform">
+            <PartyPopper className="w-16 h-16 mx-auto text-yellow-500 mb-4" />
+            <div className="text-2xl font-bold text-purple-600 mb-4">
+              沒人可抽了，人人有獎，讚！
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Dialog */}
+      {showHistoryDialog && (
+        <div className="fixed inset-0 flex items-center justify-center z-50">
+          <div className="absolute inset-0 bg-black opacity-50"></div>
+          <div className="relative bg-white rounded-xl shadow-2xl p-8 max-w-md w-full mx-4 text-center transform scale-100 transition-transform">
+            <div className="text-2xl font-bold text-purple-600 mb-4">
+              {historyMessage}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="w-full max-w-6xl bg-white rounded-xl shadow-2xl p-8">
         <div className="flex gap-4">
           {/* 左側抽獎區域 */}
@@ -336,6 +447,15 @@ const LotteryInterface = () => {
                   <PartyPopper className="w-6 h-6 mr-2 text-white" />
                   <span className="text-white whitespace-nowrap">快抽模式</span>
                 </button>
+                <div className="flex items-center px-4 py-2 bg-white rounded-lg shadow-lg">
+                  <input
+                    type="checkbox"
+                    checked={skipWinners}
+                    onChange={(e) => setSkipWinners(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                  />
+                  <span className="ml-2 text-purple-600 whitespace-nowrap">跳過已中獎</span>
+                </div>
               </div>
             </div>
           </div>
@@ -362,6 +482,13 @@ const LotteryInterface = () => {
                   >
                     <Trash2 className="w-4 h-4 mr-2 text-red-600" />
                     <span className="text-red-600 whitespace-nowrap">清除</span>
+                  </button>
+                  <button
+                    onClick={handleAddToHistory}
+                    className="flex items-center justify-center px-3 py-1 bg-white rounded-lg shadow-lg cursor-pointer hover:bg-gray-50 transition-colors"
+                  >
+                    <Upload className="w-4 h-4 mr-2 text-purple-600" />
+                    <span className="text-purple-600 whitespace-nowrap">加入歷史</span>
                   </button>
                 </div>
               </div>
