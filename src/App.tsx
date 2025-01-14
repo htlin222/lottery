@@ -248,7 +248,7 @@ const LotteryInterface = () => {
           remainingOptions = remainingOptions.filter((_, index) => index !== randomIndex);
           
           const newWinner = {
-            number: selectedOption.number,
+            number: currentWinnerIndex + 1,
             name: selectedOption
           };
           
