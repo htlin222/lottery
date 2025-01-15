@@ -323,7 +323,12 @@ const LotteryInterface = () => {
         setWinners(allWinners);
         setProgress(100);
         setShowAllWinnersDialog(true);
-        setTimeout(() => setShowAllWinnersDialog(false), 3000);
+        setTimeout(() => {
+          setShowAllWinnersDialog(false);
+          setTimeout(() => {
+            applauseSound.current.play();
+          }, 2000);
+        }, 3000);
         return;
       }
     }
@@ -344,6 +349,9 @@ const LotteryInterface = () => {
     
     setWinners(newWinners);
     setProgress(100);
+    setTimeout(() => {
+      applauseSound.current.play();
+    }, 2000);
   };
 
   useEffect(() => {
@@ -434,7 +442,10 @@ const LotteryInterface = () => {
               {/* 抽獎按鈕 */}
               <div className={`${isMobile ? 'flex flex-col space-y-2' : 'flex gap-4'}`}>
                 <button
-                  onClick={spin}
+                  onClick={() => {
+                    stopAllSounds();
+                    spin();
+                  }}
                   disabled={isSpinning || options.length === 0 || winnerCount > options.length}
                   className={`flex items-center justify-start px-6 py-3 rounded-lg shadow-lg transition-colors ${
                     isSpinning || options.length === 0 || winnerCount > options.length
@@ -446,7 +457,10 @@ const LotteryInterface = () => {
                   <span className="text-white whitespace-nowrap">{isSpinning ? '抽獎中...' : '開始抽獎'}</span>
                 </button>
                 <button
-                  onClick={quickDraw}
+                  onClick={() => {
+                    stopAllSounds();
+                    quickDraw();
+                  }}
                   disabled={isSpinning || options.length === 0 || winnerCount > options.length}
                   className={`flex items-center justify-start px-6 py-3 rounded-lg shadow-lg transition-colors ${
                     isSpinning || options.length === 0 || winnerCount > options.length
@@ -573,7 +587,7 @@ const LotteryInterface = () => {
         className="text-center text-white text-sm mt-8 bg-black/50 px-4 py-3 rounded-full cursor-pointer hover:bg-black/60 transition-colors"
         onClick={stopAllSounds}
       >
-        ⓒ 林協霆 made with 🫰
+        ⓒ 林協霆 🦎 made with ❤️🫰
       </div>
     </div>
   );
