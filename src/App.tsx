@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Sparkles, PartyPopper, RotateCcw, Trash2, Download } from 'lucide-react';
+import { Upload, Sparkles, PartyPopper, RotateCcw, Trash2, Download, Maximize, Minimize, Flame } from 'lucide-react';
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Fireworks } from '@fireworks-js/react';
 import {
@@ -67,6 +67,8 @@ const LotteryInterface = () => {
   const [skipWinners, setSkipWinners] = useState(true);
   const spinRef = useRef<NodeJS.Timeout | null>(null);
   const dialogTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [isFullScreen, setIsFullScreen] = useState(false);
+  const [showManualFirework, setShowManualFirework] = useState(false);
 
   // Sound effects
   const spinningSound = useRef(new Howl({
@@ -354,6 +356,25 @@ const LotteryInterface = () => {
     }, 2000);
   };
 
+  const toggleFullScreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen();
+    } else {
+      document.exitFullscreen();
+    }
+  };
+
+  useEffect(() => {
+    const handleFullScreenChange = () => {
+      setIsFullScreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullScreenChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', handleFullScreenChange);
+    };
+  }, []);
+
   useEffect(() => {
     return () => {
       if (spinRef.current) {
@@ -584,11 +605,52 @@ const LotteryInterface = () => {
       )}
 
       <div 
-        className="text-center text-white text-sm mt-8 bg-black/50 px-4 py-3 rounded-full cursor-pointer hover:bg-black/60 transition-colors"
-        onClick={stopAllSounds}
+        className="flex items-center justify-center gap-2"
       >
-        ⓒ 林協霆 🦎 made with ❤️🫰
+        <button
+          onClick={() => setShowManualFirework(true)}
+          className="mt-8 bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/60 transition-colors"
+          title="Trigger Firework"
+        >
+          <Flame className="w-5 h-5 text-white" />
+        </button>
+        <div 
+          className="text-center text-white text-sm mt-8 bg-black/50 px-4 py-3 rounded-full cursor-pointer hover:bg-black/60 transition-colors"
+          onClick={stopAllSounds}
+        >
+          ⓒ 林協霆 🦎 made with ❤️🫰
+        </div>
+        <button
+          onClick={toggleFullScreen}
+          className="mt-8 bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/60 transition-colors"
+          title={isFullScreen ? "Exit Full Screen" : "Enter Full Screen"}
+        >
+          {isFullScreen ? (
+            <Minimize className="w-5 h-5 text-white" />
+          ) : (
+            <Maximize className="w-5 h-5 text-white" />
+          )}
+        </button>
       </div>
+      {showManualFirework && (
+        <Fireworks
+          options={{
+            rocketsPoint: {
+              min: 0,
+              max: 100
+            }
+          }}
+          style={{
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            position: 'fixed',
+            zIndex: 1000
+          }}
+          onClick={() => setShowManualFirework(false)}
+        />
+      )}
     </div>
   );
 };
