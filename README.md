@@ -1,5 +1,7 @@
 # 和信醫院2025春酒抽獎系統
 
+![image](https://github.com/user-attachments/assets/754c47ff-2d81-4ae2-bcb1-c2055e60bad5)
+
 一個現代化的抽獎系統，專為和信醫院2025年春酒活動設計。採用React、TypeScript和Tailwind CSS構建，具有完整的抽獎功能與流暢的動畫效果。
 
 ## 主要功能
