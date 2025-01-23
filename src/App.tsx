@@ -16,7 +16,7 @@ const useIsMobile = () => {
 
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+      setIsMobile(window.innerWidth <= 1200);
     };
     
     checkIsMobile();
@@ -288,7 +288,7 @@ const LotteryInterface = () => {
               stopAllSounds();
               applauseSound.current.play();
             }
-          }, 3000);
+          }, 4000);
           
           return;
         }
@@ -390,7 +390,9 @@ const LotteryInterface = () => {
   }, []);
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 p-6">
+    <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-green-600 p-6 animate-gradient bg-[size:200%_200%]" 
+      style={{ animation: 'gradientAnimation 5s ease infinite' }}
+    >
       <div className={`w-full ${isMobile ? 'max-w-full max-h-screen overflow-y-auto' : 'max-w-6xl'} bg-white rounded-xl shadow-2xl p-8`}>
         <div className={`flex ${isMobile ? 'flex-col' : 'gap-4'}`}>
           {/* 左側抽獎區域 */}
@@ -548,7 +550,7 @@ const LotteryInterface = () => {
 
       {/* 中獎對話框 */}
       <Dialog open={showWinnerDialog} onOpenChange={setShowWinnerDialog}>
-        <DialogContent className="sm:max-w-[80vw]">
+        <DialogContent className="sm:max-w-[80vw] animate-in fade-in-50 zoom-in-95 duration-300 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[state=closed]:duration-300">
           <DialogHeader>
             <DialogTitle className="text-center">🎉 恭喜中獎 🎉</DialogTitle>
           </DialogHeader>
