@@ -243,6 +243,9 @@ const LotteryInterface = () => {
     const animate = () => {
       if (duration >= totalDuration) {
         if (currentWinnerIndex < winnerCount) {
+          // 立即清除目前顯示的名字，避免與得獎者不一致
+          setCurrentDrawing(null);
+          
           const randomIndex = Math.floor(Math.random() * remainingOptions.length);
           const selectedOption = remainingOptions[randomIndex];
           
@@ -450,7 +453,7 @@ const LotteryInterface = () => {
                     <div className="text-2xl font-bold text-center animate-bounce">
                       <div className="flex items-center space-x-2">
                         <Sparkles className="w-6 h-6 text-yellow-500" />
-                        <span className="text-purple-600">{currentDrawing || '抽獎中...'}</span>
+                        <span className="text-purple-600">{currentDrawing || '得獎勢是...'}</span>
                         <Sparkles className="w-6 h-6 text-yellow-500" />
                       </div>
                     </div>
