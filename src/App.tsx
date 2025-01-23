@@ -391,7 +391,7 @@ const LotteryInterface = () => {
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-blue-600 p-6">
-      <div className={`w-full ${isMobile ? 'max-w-full' : 'max-w-6xl'} bg-white rounded-xl shadow-2xl p-8`}>
+      <div className={`w-full ${isMobile ? 'max-w-full max-h-screen overflow-y-auto' : 'max-w-6xl'} bg-white rounded-xl shadow-2xl p-8`}>
         <div className={`flex ${isMobile ? 'flex-col' : 'gap-4'}`}>
           {/* 左側抽獎區域 */}
           <div className={`${isMobile ? 'w-full' : 'flex-1 min-w-[600px]'}`}>
@@ -548,7 +548,7 @@ const LotteryInterface = () => {
 
       {/* 中獎對話框 */}
       <Dialog open={showWinnerDialog} onOpenChange={setShowWinnerDialog}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-[80vw]">
           <DialogHeader>
             <DialogTitle className="text-center">🎉 恭喜中獎 🎉</DialogTitle>
           </DialogHeader>
