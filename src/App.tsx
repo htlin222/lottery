@@ -19,7 +19,6 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
 
 const useIsMobile = () => {
@@ -193,42 +192,6 @@ const LotteryInterface = () => {
       }
     }
   };
-
-  const addToHistory = (winner: { number: number; name: string }) => {
-    // Check if winner already exists in history
-    const isDuplicate = historicalWinners.some(hw => hw.name === winner.name);
-    if (isDuplicate) {
-      setHistoryMessage(`${winner.name} 已經在歷史名單中`);
-      setShowHistoryMessage(true);
-      setTimeout(() => setShowHistoryMessage(false), 2000);
-      return;
-    }
-
-    const timestamp = new Date().toLocaleString('zh-TW', { 
-      year: 'numeric', 
-      month: '2-digit', 
-      day: '2-digit',
-      hour: '2-digit', 
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    });
-    const newHistoricalWinner = { ...winner, timestamp };
-    const updatedHistory = [...historicalWinners, newHistoricalWinner];
-    setHistoricalWinners(updatedHistory);
-    localStorage.setItem('lotteryWinners', JSON.stringify(updatedHistory));
-    setHistoryMessage(`已將 ${winner.name} 加入歷史`);
-    setShowHistoryMessage(true);
-    setTimeout(() => setShowHistoryMessage(false), 2000);
-  };
-
-  // Load historical winners from localStorage on component mount
-  useEffect(() => {
-    const savedWinners = localStorage.getItem('lotteryWinners');
-    if (savedWinners) {
-      setHistoricalWinners(JSON.parse(savedWinners));
-    }
-  }, []);
 
   const handleAddToHistory = () => {
     if (winners.length === 0) {
