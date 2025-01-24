@@ -152,7 +152,7 @@ const HistoryPage: React.FC = () => {
     totalParticipants: uploadedParticipants.length || totalParticipants.length,
     totalWinners: uniqueWinners.size,
     remainingParticipants: (uploadedParticipants.length || totalParticipants.length) - uniqueWinners.size,
-    totalDraws: historicalWinners.length
+    totalDraws: new Set(historicalWinners.map(w => w.timestamp)).size
   };
 
   return (

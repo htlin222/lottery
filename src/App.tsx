@@ -20,15 +20,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import HistoryPage from './pages/HistoryPage';
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkIsMobile = () => {
-      setIsMobile(window.innerWidth <= 1200);
+      setIsMobile(window.innerWidth <= 1400);
     };
     
     checkIsMobile();
