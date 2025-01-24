@@ -99,7 +99,10 @@ const LotteryInterface = () => {
     try {
       setFileName(file.name);
       const text = await file.text();
-      const lines = text.split('\n').filter(line => line.trim());
+      const lines = text.split('\n')
+        .map(line => line.trim())
+        .filter(line => line)
+        .map(line => `"${line}"`); // 用引號包住每個名字
       if (lines.length === 0) {
         setError('文件內容不能為空');
         return;
@@ -199,6 +202,23 @@ const LotteryInterface = () => {
     setTimeout(() => setShowHistoryDialog(false), 2000);
   };
 
+  // 使用 Crypto.getRandomValues() 生成更安全的隨機數
+  const secureRandom = () => {
+    const array = new Uint32Array(1);
+    crypto.getRandomValues(array);
+    return array[0] / (0xffffffff + 1);
+  };
+
+  // Fisher-Yates 洗牌算法
+  const shuffleArray = <T,>(array: T[]): T[] => {
+    const shuffled = [...array];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(secureRandom() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
   // 抽獎動畫效果
   const spin = () => {
     if (isSpinning || options.length === 0 || winnerCount > options.length) {
@@ -222,9 +242,7 @@ const LotteryInterface = () => {
       const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
       remainingOptions = remainingOptions.filter(name => !historyWinners.includes(name));
       
-      // If there are fewer people available than needed
       if (remainingOptions.length < winnerCount) {
-        // Draw all remaining people
         const allWinners = remainingOptions.map((name, index) => ({
           number: index + 1,
           name: name
@@ -237,24 +255,24 @@ const LotteryInterface = () => {
         return;
       }
     }
+
+    // 先對剩餘選項進行洗牌
+    remainingOptions = shuffleArray(remainingOptions);
+    let animationOptions = [...remainingOptions]; // 用於動畫展示的陣列
     
     spinningSound.current.play();
     
     const animate = () => {
       if (duration >= totalDuration) {
         if (currentWinnerIndex < winnerCount) {
-          // 立即清除目前顯示的名字，避免與得獎者不一致
           setCurrentDrawing(null);
           
-          const randomIndex = Math.floor(Math.random() * remainingOptions.length);
-          const selectedOption = remainingOptions[randomIndex];
-          
-          // Remove the selected option from remaining options
-          remainingOptions = remainingOptions.filter((_, index) => index !== randomIndex);
+          // 從已洗牌的陣列中取得下一個得獎者
+          const selectedOption = remainingOptions[currentWinnerIndex];
           
           const newWinner = {
             number: currentWinnerIndex + 1,
-            name: selectedOption
+            name: selectedOption.replace(/^"|"$/g, '') // 移除引號
           };
           
           setWinners(prev => [...prev, newWinner]);
@@ -264,25 +282,24 @@ const LotteryInterface = () => {
           stopAllSounds();
           winnerSound.current.play();
           
-          // 3秒後自動關閉對話框
           if (dialogTimeoutRef.current) {
             clearTimeout(dialogTimeoutRef.current);
           }
+          
           dialogTimeoutRef.current = setTimeout(() => {
             setShowWinnerDialog(false);
             setCurrentWinner(null);
             
-            // 如果還有下一位要抽，等對話框關閉後再繼續
             if (currentWinnerIndex + 1 < winnerCount) {
               setTimeout(() => {
                 currentWinnerIndex++;
                 duration = 0;
+                animationOptions = remainingOptions.filter((_, index) => index > currentWinnerIndex);
                 stopAllSounds();
                 spinningSound.current.play();
                 animate();
               }, 100);
             } else {
-              // 全部抽完
               setIsSpinning(false);
               setProgress(100);
               stopAllSounds();
@@ -294,8 +311,9 @@ const LotteryInterface = () => {
         }
       }
       
-      const randomIndex = Math.floor(Math.random() * remainingOptions.length);
-      setCurrentDrawing(remainingOptions[randomIndex]);
+      // 動畫過程中的隨機展示
+      const displayIndex = Math.floor(secureRandom() * animationOptions.length);
+      setCurrentDrawing(animationOptions[displayIndex].replace(/^"|"$/g, '')); // 移除引號
       duration += interval;
       setProgress((duration / totalDuration) * 100);
       spinRef.current = setTimeout(animate, interval);
@@ -318,9 +336,7 @@ const LotteryInterface = () => {
       const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
       remainingOptions = remainingOptions.filter(name => !historyWinners.includes(name));
       
-      // If there are fewer people available than needed
       if (remainingOptions.length < winnerCount) {
-        // Draw all remaining people
         const allWinners = remainingOptions.map((name, index) => ({
           number: index + 1,
           name: name
@@ -338,19 +354,12 @@ const LotteryInterface = () => {
       }
     }
     
-    let newWinners = [];
-    
-    // 直接抽出所有得獎者
-    for (let i = 0; i < winnerCount; i++) {
-      const randomIndex = Math.floor(Math.random() * remainingOptions.length);
-      const winner = remainingOptions[randomIndex];
-      remainingOptions.splice(randomIndex, 1);
-      
-      newWinners.push({
-        number: i + 1,
-        name: winner
-      });
-    }
+    // 使用 Fisher-Yates 洗牌並直接取前 N 個
+    const shuffledOptions = shuffleArray(remainingOptions);
+    const newWinners = shuffledOptions.slice(0, winnerCount).map((winner, index) => ({
+      number: index + 1,
+      name: winner.replace(/^"|"$/g, '') // 移除引號
+    }));
     
     setWinners(newWinners);
     setProgress(100);
@@ -399,7 +408,7 @@ const LotteryInterface = () => {
           <div className={`${isMobile ? 'w-full' : 'flex-1 min-w-[600px]'}`}>
             {/* 標題 */}
             <h1 className="text-3xl font-bold text-left mb-6 text-purple-600">
-              和信醫院2025春酒抽獎
+              和信醫院{new Date().getFullYear()}春酒抽獎
             </h1>
 
             <div className={`space-y-6 w-full ${isMobile ? '' : 'max-w-md'}`}>
