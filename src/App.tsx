@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Upload, Sparkles, PartyPopper, RotateCcw, Trash2, Download, Maximize, Minimize, Flame } from 'lucide-react';
+import { Upload, Sparkles, PartyPopper, RotateCcw, Trash2, Download, Maximize, Minimize, Flame, History } from 'lucide-react';
 import { Alert, AlertTitle } from "@/components/ui/alert";
 import { Fireworks } from '@fireworks-js/react';
 import {
@@ -53,6 +53,7 @@ const LotteryInterface = () => {
   const [options, setOptions] = useState<string[]>([]);
   const [isSpinning, setIsSpinning] = useState(false);
   const [winners, setWinners] = useState<Array<{ number: number; name: string }>>([]);
+  const [historicalWinners, setHistoricalWinners] = useState<Array<{ number: number; name: string; timestamp: string }>>([]);
   const [currentDrawing, setCurrentDrawing] = useState<string | null>(null);
   const [winnerCount, setWinnerCount] = useState(1);
   const [inputWinnerCount, setInputWinnerCount] = useState<string>('1');
@@ -178,6 +179,30 @@ const LotteryInterface = () => {
     }
   };
 
+  const addToHistory = (winner: { number: number; name: string }) => {
+    const timestamp = new Date().toLocaleString('zh-TW', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit', 
+      minute: '2-digit'
+    });
+    const newHistoricalWinner = { ...winner, timestamp };
+    const updatedHistory = [...historicalWinners, newHistoricalWinner];
+    setHistoricalWinners(updatedHistory);
+    localStorage.setItem('lotteryWinners', JSON.stringify(updatedHistory));
+    setHistoryMessage(`已將 ${winner.name} 加入歷史`);
+    setShowHistoryDialog(true);
+  };
+
+  // Load historical winners from localStorage on component mount
+  useEffect(() => {
+    const savedWinners = localStorage.getItem('lotteryWinners');
+    if (savedWinners) {
+      setHistoricalWinners(JSON.parse(savedWinners));
+    }
+  }, []);
+
   const handleAddToHistory = () => {
     if (winners.length === 0) {
       setHistoryMessage('目前沒有得獎名單可以加入歷史');
@@ -186,20 +211,24 @@ const LotteryInterface = () => {
       return;
     }
 
-    const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
-    const newWinners = winners.map(w => w.name);
-    const duplicates = newWinners.filter(name => historyWinners.includes(name));
-    
-    if (duplicates.length > 0) {
-      setHistoryMessage(`注意：${duplicates.join(', ')} 已在歷史名單中`);
-    } else {
-      setHistoryMessage(`已將 ${newWinners.length} 位得獎者加入歷史名單`);
-    }
-    
-    const newHistory = [...historyWinners, ...newWinners];
-    localStorage.setItem('lotteryHistory', JSON.stringify(newHistory));
+    const timestamp = new Date().toLocaleString('zh-TW', { 
+      year: 'numeric', 
+      month: '2-digit', 
+      day: '2-digit',
+      hour: '2-digit', 
+      minute: '2-digit'
+    });
+
+    const newHistoricalWinners = winners.map(winner => ({
+      ...winner,
+      timestamp
+    }));
+
+    const updatedHistory = [...historicalWinners, ...newHistoricalWinners];
+    setHistoricalWinners(updatedHistory);
+    localStorage.setItem('lotteryWinners', JSON.stringify(updatedHistory));
+    setHistoryMessage(`已將 ${winners.length} 位得獎者加入歷史名單`);
     setShowHistoryDialog(true);
-    setTimeout(() => setShowHistoryDialog(false), 2000);
   };
 
   // 使用 Crypto.getRandomValues() 生成更安全的隨機數
@@ -239,19 +268,18 @@ const LotteryInterface = () => {
 
     // Filter out history winners if skipWinners is checked
     if (skipWinners) {
-      const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
-      remainingOptions = remainingOptions.filter(name => !historyWinners.includes(name));
+      // 合併歷史得獎者和當前得獎者
+      const allWinners = [...historicalWinners, ...winners];
+      const winnerNames = new Set(allWinners.map(winner => winner.name));
+      remainingOptions = remainingOptions.filter(name => {
+        // 移除可能的引號後再比對
+        const cleanName = name.replace(/^"|"$/g, '');
+        return !winnerNames.has(cleanName);
+      });
       
       if (remainingOptions.length < winnerCount) {
-        const allWinners = remainingOptions.map((name, index) => ({
-          number: index + 1,
-          name: name
-        }));
-        setWinners(allWinners);
+        setError(`可抽取人數不足：歷史得獎者已被排除，剩餘可抽取人數為 ${remainingOptions.length} 人`);
         setIsSpinning(false);
-        setProgress(100);
-        setShowAllWinnersDialog(true);
-        setTimeout(() => setShowAllWinnersDialog(false), 3000);
         return;
       }
     }
@@ -333,23 +361,17 @@ const LotteryInterface = () => {
 
     // Filter out history winners if skipWinners is checked
     if (skipWinners) {
-      const historyWinners = JSON.parse(localStorage.getItem('lotteryHistory') || '[]');
-      remainingOptions = remainingOptions.filter(name => !historyWinners.includes(name));
+      // 合併歷史得獎者和當前得獎者
+      const allWinners = [...historicalWinners, ...winners];
+      const winnerNames = new Set(allWinners.map(winner => winner.name));
+      remainingOptions = remainingOptions.filter(name => {
+        // 移除可能的引號後再比對
+        const cleanName = name.replace(/^"|"$/g, '');
+        return !winnerNames.has(cleanName);
+      });
       
       if (remainingOptions.length < winnerCount) {
-        const allWinners = remainingOptions.map((name, index) => ({
-          number: index + 1,
-          name: name
-        }));
-        setWinners(allWinners);
-        setProgress(100);
-        setShowAllWinnersDialog(true);
-        setTimeout(() => {
-          setShowAllWinnersDialog(false);
-          setTimeout(() => {
-            applauseSound.current.play();
-          }, 2000);
-        }, 3000);
+        setError(`可抽取人數不足：歷史得獎者已被排除，剩餘可抽取人數為 ${remainingOptions.length} 人`);
         return;
       }
     }
@@ -606,16 +628,62 @@ const LotteryInterface = () => {
       )}
 
       {showHistoryDialog && (
-        <Dialog open={showHistoryDialog} onOpenChange={setShowHistoryDialog}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-center">歷史紀錄已更新</DialogTitle>
-            </DialogHeader>
-            <div className="text-center">
-              {historyMessage}
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
+            <h2 className="text-xl font-bold mb-4">歷史得獎名單</h2>
+            <div className="space-y-4">
+              {historicalWinners.length > 0 ? (
+                Object.entries(
+                  historicalWinners.reduce((acc, winner) => {
+                    if (!acc[winner.timestamp]) {
+                      acc[winner.timestamp] = [];
+                    }
+                    acc[winner.timestamp].push(winner);
+                    return acc;
+                  }, {} as Record<string, typeof historicalWinners>)
+                )
+                .sort((a, b) => new Date(b[0]).getTime() - new Date(a[0]).getTime())
+                .map(([timestamp, groupWinners]) => (
+                  <div key={timestamp} className="bg-gray-50 rounded-lg p-4">
+                    <div className="text-sm text-gray-500 mb-2 font-medium">
+                      {timestamp}
+                    </div>
+                    <div className="space-y-2">
+                      {groupWinners.map((winner, index) => (
+                        <div key={index} className="flex justify-between items-center bg-white p-2 rounded">
+                          <span className="font-medium">#{winner.number}</span>
+                          <span>{winner.name}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="text-gray-500 text-center py-4">
+                  還沒有歷史得獎紀錄
+                </div>
+              )}
             </div>
-          </DialogContent>
-        </Dialog>
+            <div className="flex gap-2 mt-4">
+              <button
+                onClick={() => {
+                  localStorage.removeItem('lotteryWinners');
+                  setHistoricalWinners([]);
+                  setError(''); // 清除錯誤訊息
+                }}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors w-1/2"
+              >
+                清除歷史
+              </button>
+              <button
+                onClick={() => setShowHistoryDialog(false)}
+                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors w-1/2"
+              >
+                關閉
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       <div 
@@ -644,6 +712,13 @@ const LotteryInterface = () => {
           ) : (
             <Maximize className="w-5 h-5 text-white" />
           )}
+        </button>
+        <button
+          onClick={() => setShowHistoryDialog(true)}
+          className="mt-8 bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/60 transition-colors"
+          title="Show History"
+        >
+          <History className="w-5 h-5 text-white" />
         </button>
       </div>
       {showManualFirework && (
