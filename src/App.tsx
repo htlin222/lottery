@@ -193,6 +193,15 @@ const LotteryInterface = () => {
   };
 
   const addToHistory = (winner: { number: number; name: string }) => {
+    // Check if winner already exists in history
+    const isDuplicate = historicalWinners.some(hw => hw.name === winner.name);
+    if (isDuplicate) {
+      setHistoryMessage(`${winner.name} 已經在歷史名單中`);
+      setShowHistoryMessage(true);
+      setTimeout(() => setShowHistoryMessage(false), 2000);
+      return;
+    }
+
     const timestamp = new Date().toLocaleString('zh-TW', { 
       year: 'numeric', 
       month: '2-digit', 
@@ -208,6 +217,7 @@ const LotteryInterface = () => {
     localStorage.setItem('lotteryWinners', JSON.stringify(updatedHistory));
     setHistoryMessage(`已將 ${winner.name} 加入歷史`);
     setShowHistoryMessage(true);
+    setTimeout(() => setShowHistoryMessage(false), 2000);
   };
 
   // Load historical winners from localStorage on component mount
@@ -226,6 +236,22 @@ const LotteryInterface = () => {
       return;
     }
 
+    // Filter out winners that already exist in history
+    const duplicateWinners = winners.filter(winner => 
+      historicalWinners.some(hw => hw.name === winner.name)
+    );
+    const newWinners = winners.filter(winner => 
+      !historicalWinners.some(hw => hw.name === winner.name)
+    );
+
+    if (newWinners.length === 0) {
+      const duplicateList = duplicateWinners.map(w => w.name).join('、');
+      setHistoryMessage(`${duplicateList} ⚠️ 已經在歷史名單中`);
+      setShowHistoryMessage(true);
+      setTimeout(() => setShowHistoryMessage(false), 2000);
+      return;
+    }
+
     const timestamp = new Date().toLocaleString('zh-TW', { 
       year: 'numeric', 
       month: '2-digit', 
@@ -236,7 +262,7 @@ const LotteryInterface = () => {
       hour12: false
     });
 
-    const newHistoricalWinners = winners.map(winner => ({
+    const newHistoricalWinners = newWinners.map(winner => ({
       ...winner,
       timestamp
     }));
@@ -247,8 +273,13 @@ const LotteryInterface = () => {
     localStorage.setItem('lotteryWinners', JSON.stringify(updatedHistory));
 
     // 只顯示這次新加入的名單
-    const winnersList = newHistoricalWinners.map(w => w.name).join('、');
-    setHistoryMessage(`已將 ${winnersList} 加入歷史名單`);
+    const winnersList = newWinners.map(w => w.name).join('、');
+    let message = `已將 ${winnersList} 加入歷史名單`;
+    if (duplicateWinners.length > 0) {
+      const duplicateList = duplicateWinners.map(w => w.name).join('、');
+      message += `\n${duplicateList} 已在歷史名單中，未重複加入`;
+    }
+    setHistoryMessage(message);
     setShowHistoryMessage(true);
     setTimeout(() => setShowHistoryMessage(false), 2000);
   };
