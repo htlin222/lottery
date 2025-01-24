@@ -72,6 +72,7 @@ const LotteryInterface = () => {
   const [showWinnerDialog, setShowWinnerDialog] = useState(false);
   const [showAllWinnersDialog, setShowAllWinnersDialog] = useState(false);
   const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+  const [showHistoryMessage, setShowHistoryMessage] = useState(false);
   const [historyMessage, setHistoryMessage] = useState('');
   const [currentWinner, setCurrentWinner] = useState<{ number: number; name: string } | null>(null);
   const [progress, setProgress] = useState(0);
@@ -206,7 +207,7 @@ const LotteryInterface = () => {
     setHistoricalWinners(updatedHistory);
     localStorage.setItem('lotteryWinners', JSON.stringify(updatedHistory));
     setHistoryMessage(`已將 ${winner.name} 加入歷史`);
-    setShowHistoryDialog(true);
+    setShowHistoryMessage(true);
   };
 
   // Load historical winners from localStorage on component mount
@@ -220,8 +221,8 @@ const LotteryInterface = () => {
   const handleAddToHistory = () => {
     if (winners.length === 0) {
       setHistoryMessage('目前沒有得獎名單可以加入歷史');
-      setShowHistoryDialog(true);
-      setTimeout(() => setShowHistoryDialog(false), 2000);
+      setShowHistoryMessage(true);
+      setTimeout(() => setShowHistoryMessage(false), 2000);
       return;
     }
 
@@ -240,11 +241,16 @@ const LotteryInterface = () => {
       timestamp
     }));
 
+    // 更新歷史記錄
     const updatedHistory = [...historicalWinners, ...newHistoricalWinners];
     setHistoricalWinners(updatedHistory);
     localStorage.setItem('lotteryWinners', JSON.stringify(updatedHistory));
-    setHistoryMessage(`已將 ${winners.length} 位得獎者加入歷史名單`);
-    setShowHistoryDialog(true);
+
+    // 只顯示這次新加入的名單
+    const winnersList = newHistoricalWinners.map(w => w.name).join('、');
+    setHistoryMessage(`已將 ${winnersList} 加入歷史名單`);
+    setShowHistoryMessage(true);
+    setTimeout(() => setShowHistoryMessage(false), 2000);
   };
 
   // 使用 Crypto.getRandomValues() 生成更安全的隨機數
@@ -368,6 +374,13 @@ const LotteryInterface = () => {
 
   // 快抽模式
   const quickDraw = () => {
+    // Reset error message first
+    setError('');
+    
+    // Stop any playing sounds first
+    spinningSound.current.stop();
+    winnerSound.current.stop();
+    
     if (options.length === 0 || winnerCount > options.length) {
       setError('抽獎人數不能大於參與人數');
       return;
@@ -469,13 +482,13 @@ const LotteryInterface = () => {
                   <RotateCcw className="w-5 h-5 mr-2 text-purple-600" />
                   <span className="text-purple-600 whitespace-nowrap">重新載入</span>
                 </button>
-                <div className="flex items-center px-4 py-2 bg-white rounded-lg shadow-lg">
+                <div className="flex w-[150px] items-center px-4 py-2 bg-white rounded-lg shadow-lg">
                   <span className="text-purple-600 whitespace-nowrap mr-2">抽獎人數:</span>
                   <input
                     type="text"
                     value={inputWinnerCount}
                     onChange={handleWinnerCountChange}
-                    className="w-16 border-none bg-transparent text-purple-600 focus:outline-none text-left"
+                    className="w-10 border-none bg-transparent text-purple-600 focus:outline-none text-left"
                     placeholder="≥1"
                   />
                 </div>
@@ -502,7 +515,7 @@ const LotteryInterface = () => {
                     <div className="text-2xl font-bold text-center animate-bounce">
                       <div className="flex items-center space-x-2">
                         <Sparkles className="w-6 h-6 text-yellow-500" />
-                        <span className="text-purple-600">{currentDrawing || '得獎勢是...'}</span>
+                        <span className="text-purple-600">{currentDrawing || '得獎的是...'}</span>
                         <Sparkles className="w-6 h-6 text-yellow-500" />
                       </div>
                     </div>
@@ -696,6 +709,12 @@ const LotteryInterface = () => {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {showHistoryMessage && (
+        <div className="fixed top-4 left-1/2 transform -translate-x-1/2 bg-black bg-opacity-80 text-white px-6 py-3 rounded-full z-50">
+          {historyMessage}
         </div>
       )}
 
