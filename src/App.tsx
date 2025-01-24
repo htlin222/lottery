@@ -122,6 +122,7 @@ const LotteryInterface = () => {
         return;
       }
       setOptions(lines);
+      localStorage.setItem('currentParticipants', JSON.stringify(lines));
       setError('');
       setWinners([]);
     } catch (err) {
@@ -131,6 +132,7 @@ const LotteryInterface = () => {
 
   const handleReload = () => {
     setOptions([]);
+    localStorage.removeItem('currentParticipants');
     setWinners([]);
     setError('');
     setCurrentDrawing(null);
@@ -480,6 +482,19 @@ const LotteryInterface = () => {
     };
   }, []);
 
+  const openHistoryInNewWindow = () => {
+    const width = 800;
+    const height = 600;
+    const left = (window.screen.width - width) / 2;
+    const top = (window.screen.height - height) / 2;
+    
+    window.open(
+      '/history',
+      'LotteryHistory',
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-green-600 p-6 animate-gradient bg-[size:200%_200%]" 
       style={{ animation: 'gradientAnimation 5s ease infinite' }}
@@ -690,7 +705,16 @@ const LotteryInterface = () => {
       {showHistoryDialog && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg p-6 max-w-lg w-full max-h-[80vh] overflow-y-auto">
-            <h2 className="text-xl font-bold mb-4">歷史得獎名單</h2>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">歷史得獎名單</h2>
+              <button
+                onClick={openHistoryInNewWindow}
+                className="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md flex items-center gap-1"
+              >
+                <Maximize className="w-4 h-4" />
+                開新視窗
+              </button>
+            </div>
             <div className="space-y-4">
               {historicalWinners.length > 0 ? (
                 Object.entries(
@@ -762,7 +786,7 @@ const LotteryInterface = () => {
             <AlertDialogAction
               onClick={() => {
                 setHistoricalWinners([]);
-                localStorage.removeItem('lotteryWinners');
+                localStorage.setItem('lotteryWinners', JSON.stringify([]));
                 setShowClearHistoryDialog(false);
               }}
             >
