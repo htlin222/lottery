@@ -10,6 +10,17 @@ import {
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
 import { Howl } from 'howler';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 
 const useIsMobile = () => {
   const [isMobile, setIsMobile] = useState(false);
@@ -70,6 +81,7 @@ const LotteryInterface = () => {
   const dialogTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showManualFirework, setShowManualFirework] = useState(false);
+  const [showClearHistoryDialog, setShowClearHistoryDialog] = useState(false);
 
   // Sound effects
   const spinningSound = useRef(new Howl({
@@ -185,7 +197,9 @@ const LotteryInterface = () => {
       month: '2-digit', 
       day: '2-digit',
       hour: '2-digit', 
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
     });
     const newHistoricalWinner = { ...winner, timestamp };
     const updatedHistory = [...historicalWinners, newHistoricalWinner];
@@ -216,7 +230,9 @@ const LotteryInterface = () => {
       month: '2-digit', 
       day: '2-digit',
       hour: '2-digit', 
-      minute: '2-digit'
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
     });
 
     const newHistoricalWinners = winners.map(winner => ({
@@ -278,7 +294,7 @@ const LotteryInterface = () => {
       });
       
       if (remainingOptions.length < winnerCount) {
-        setError(`可抽取人數不足：歷史得獎者已被排除，剩餘可抽取人數為 ${remainingOptions.length} 人`);
+        setError(`人數不足：歷史得獎者已被排除，剩 ${remainingOptions.length} 人`);
         setIsSpinning(false);
         return;
       }
@@ -371,7 +387,7 @@ const LotteryInterface = () => {
       });
       
       if (remainingOptions.length < winnerCount) {
-        setError(`可抽取人數不足：歷史得獎者已被排除，剩餘可抽取人數為 ${remainingOptions.length} 人`);
+        setError(`人數不足：歷史得獎者已被排除，剩 ${remainingOptions.length} 人`);
         return;
       }
     }
@@ -666,18 +682,15 @@ const LotteryInterface = () => {
             </div>
             <div className="flex gap-2 mt-4">
               <button
-                onClick={() => {
-                  localStorage.removeItem('lotteryWinners');
-                  setHistoricalWinners([]);
-                  setError(''); // 清除錯誤訊息
-                }}
-                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors w-1/2"
+                disabled={historicalWinners.length === 0}
+                onClick={() => setShowClearHistoryDialog(true)}
+                className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition-colors w-1/2 disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 清除歷史
               </button>
               <button
                 onClick={() => setShowHistoryDialog(false)}
-                className="px-4 py-2 bg-gray-200 rounded hover:bg-gray-300 transition-colors w-1/2"
+                className="px-4 py-2 bg-gray-500 text-white rounded hover:bg-gray-600 transition-colors w-1/2"
               >
                 關閉
               </button>
@@ -685,6 +698,29 @@ const LotteryInterface = () => {
           </div>
         </div>
       )}
+
+      <AlertDialog open={showClearHistoryDialog} onOpenChange={setShowClearHistoryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>確定要清除所有歷史紀錄嗎？</AlertDialogTitle>
+            <AlertDialogDescription>
+              此動作無法復原，所有的歷史得獎紀錄都會被永久刪除。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>取消</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                setHistoricalWinners([]);
+                localStorage.removeItem('lotteryWinners');
+                setShowClearHistoryDialog(false);
+              }}
+            >
+              確定清除
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <div 
         className="flex items-center justify-center gap-2"
