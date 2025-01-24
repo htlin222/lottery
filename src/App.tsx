@@ -458,6 +458,33 @@ const LotteryInterface = () => {
     );
   };
 
+  // Keyboard event handlers
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      // Ignore key events if there's a text input focused
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+
+      if (event.code === 'Space') {
+        event.preventDefault(); // Prevent page scroll
+        stopAllSounds();
+        spin();
+      } else if (event.key.toLowerCase() === 'q') {
+        stopAllSounds();
+        quickDraw();
+      } else if (event.key.toLowerCase() === 'f') {
+        event.preventDefault(); // Prevent browser's find function
+        toggleFullScreen();
+      } else if (event.key.toLowerCase() === 'm') {
+        stopAllSounds();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [isSpinning, options, winnerCount, skipWinners, historicalWinners, winners]); // Dependencies for spin and quickDraw functions
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen bg-gradient-to-br from-purple-600 to-green-600 p-6 animate-gradient bg-[size:200%_200%]" 
       style={{ animation: 'gradientAnimation 5s ease infinite' }}
