@@ -82,6 +82,8 @@ const LotteryInterface = () => {
   const [isFullScreen, setIsFullScreen] = useState(false);
   const [showManualFirework, setShowManualFirework] = useState(false);
   const [showClearHistoryDialog, setShowClearHistoryDialog] = useState(false);
+  const [haveSaveHistory, setHaveSaveHistory] = useState(false);
+  const [showHistorySaveDialog, setShowHistorySaveDialog] = useState(false);
 
   // Sound effects
   const spinningSound = useRef(new Howl({
@@ -201,6 +203,8 @@ const LotteryInterface = () => {
       return;
     }
 
+    setHaveSaveHistory(true);
+
     // Filter out winners that already exist in history
     const duplicateWinners = winners.filter(winner => 
       historicalWinners.some(hw => hw.name === winner.name)
@@ -267,9 +271,14 @@ const LotteryInterface = () => {
   };
 
   // 抽獎動畫效果
-  const spin = () => {
+  const spin = async () => {
     if (isSpinning || options.length === 0 || winnerCount > options.length) {
       setError('抽獎人數不能大於參與人數');
+      return;
+    }
+
+    if (!haveSaveHistory && winners.length > 0) {
+      setShowHistorySaveDialog(true);
       return;
     }
     
@@ -277,6 +286,7 @@ const LotteryInterface = () => {
     setCurrentDrawing(null);
     setWinners([]);
     setProgress(0);
+    setHaveSaveHistory(false);
     
     let duration = 0;
     const totalDuration = 2500; // 總動畫時間
@@ -381,6 +391,11 @@ const LotteryInterface = () => {
       setError('抽獎人數不能大於參與人數');
       return;
     }
+
+    if (!haveSaveHistory && winners.length > 0) {
+      setShowHistorySaveDialog(true);
+      return;
+    }
     
     let remainingOptions = [...options];
 
@@ -410,6 +425,7 @@ const LotteryInterface = () => {
     
     setWinners(newWinners);
     setProgress(100);
+    setHaveSaveHistory(false);
     setTimeout(() => {
       applauseSound.current.play();
     }, 2000);
@@ -782,6 +798,32 @@ const LotteryInterface = () => {
             >
               確定清除
             </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={showHistorySaveDialog} onOpenChange={setShowHistorySaveDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>要將目前的得獎名單加入歷史嗎？</AlertDialogTitle>
+            <AlertDialogDescription>
+              開始新一輪抽獎前，建議先將目前的得獎名單加入歷史。
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => {
+              setShowHistorySaveDialog(false);
+              setHaveSaveHistory(true);
+            }}>略過</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowHistorySaveDialog(false);
+              handleAddToHistory();
+              if (isSpinning) {
+                spin();
+              } else {
+                quickDraw();
+              }
+            }}>加入歷史</AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
