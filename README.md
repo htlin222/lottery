@@ -1,3 +1,7 @@
+![GitHub stars](https://img.shields.io/github/stars/htlin222/lottery?style=flat-square)
+![Last commit](https://img.shields.io/github/last-commit/htlin222/lottery?style=flat-square)
+![License](https://img.shields.io/github/license/htlin222/lottery?style=flat-square)
+
 # 和信醫院2025春酒抽獎系統
 
 ![image](https://github.com/user-attachments/assets/754c47ff-2d81-4ae2-bcb1-c2055e60bad5)
